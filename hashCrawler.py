@@ -32,6 +32,7 @@ class Spinner:
 
     @staticmethod
     def spinning_cursor():
+        print ""
         while 1:
             for cursor in '|/-\\': yield cursor
 
@@ -63,10 +64,20 @@ def req(link):
 
     spinner.start()
 
-    driver.get(link)
-    doc = driver.page_source # Extract loaded content
+    try:
+        if "http://" in link or "https://" in link:
+            driver.get(link)
+        else:
+            driver.get("http://"+link.rstrip())
 
-    spinner.stop()
+        doc = driver.page_source # Extract loaded content
+
+        spinner.stop()
+
+    except:
+        print("LINK ERROR")
+        doc = "ERROR"
+
     return doc
 
 def bsoup(doc):
@@ -99,6 +110,11 @@ def hash(contents):
     sha1 = list(set(sha1))
     sha1 = [x.strip() for x in sha1]
     all_hash.append(sha1)
+
+    if all_hash[0] == [] and all_hash[1] == [] and all_hash[2] == []:
+        all_hash = "NOHASH"
+    else:
+        pass
 
     return all_hash
 
@@ -143,11 +159,17 @@ def main():
         print("PARSING: %s" % (link) )
 
         html_doc = req(link)
-        soup = bsoup(html_doc)
-        content = soup_text(soup)
-        hashes = hash(content)
-        write = writer(link,hashes)
-        new_dict.append(write) #PASS THE UPDATE TO WRITER
+
+        if html_doc != "ERROR":
+            soup = bsoup(html_doc)
+            content = soup_text(soup)
+            hashes = hash(content)
+
+            if hashes != "NOHASH":
+                write = writer(link,hashes)
+                new_dict.append(write) #PASS THE UPDATE TO WRITER
+            else:
+                print("NO HASH FOUND \n")
 
     driver.close()
 
